@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>随机两人配对 - Random Pair Generator</title>
+    <title>掼蛋博士出品：随机匹配队友工具</title>
     <style>
         :root {
             --bg-start: #e8eef5;
@@ -57,7 +57,6 @@
             overflow-x: hidden;
         }
 
-        /* 背景装饰 */
         body::before {
             content: '';
             position: fixed;
@@ -90,7 +89,6 @@
             z-index: 1;
         }
 
-        /* 主卡片 */
         .card {
             background: var(--card-bg);
             border-radius: var(--radius-xl);
@@ -103,7 +101,6 @@
             box-shadow: var(--shadow-xl);
         }
 
-        /* 头部 */
         .header {
             text-align: center;
             margin-bottom: 28px;
@@ -141,7 +138,6 @@
             font-weight: 400;
         }
 
-        /* 输入区域 */
         .input-section {
             margin-bottom: 20px;
         }
@@ -216,7 +212,6 @@
             box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.06);
         }
 
-        /* 按钮行 */
         .button-row {
             display: flex;
             flex-wrap: wrap;
@@ -311,7 +306,6 @@
             gap: 4px;
         }
 
-        /* 结果区域 */
         .result-section {
             margin-top: 8px;
             opacity: 0;
@@ -389,7 +383,6 @@
             line-height: 1.9;
             word-break: break-all;
             letter-spacing: 0.02em;
-            white-space: pre-wrap;
             min-height: 48px;
             transition: all var(--transition);
             position: relative;
@@ -416,7 +409,6 @@
             flex-wrap: wrap;
         }
 
-        /* Toast */
         .toast {
             position: fixed;
             top: 24px;
@@ -450,7 +442,6 @@
             background: #dc2626;
         }
 
-        /* 响应式 */
         @media (max-width: 600px) {
             .card {
                 padding: 24px 16px 20px;
@@ -508,7 +499,6 @@
 
     <div class="container">
         <div class="card">
-            <!-- 头部 -->
             <div class="header">
                 <div class="icon-wrapper">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -519,11 +509,10 @@
                         <line x1="9" y1="10" x2="9.5" y2="13.5"/>
                     </svg>
                 </div>
-                <h1>掼蛋博士-随机匹配队友工具</h1>
+                <h1>掼蛋博士出品：随机匹配队友工具</h1>
                 <p class="subtitle">输入名字，完全随机匹配，两人一组</p>
             </div>
 
-            <!-- 输入区域 -->
             <div class="input-section">
                 <div class="input-label-row">
                     <span class="input-label">📋 名字列表</span>
@@ -535,7 +524,6 @@
             ></textarea>
         </div>
 
-        <!-- 按钮行 -->
         <div class="button-row">
             <button class="btn btn-primary" id="btnMatch" title="开始随机匹配（Ctrl+Enter）">
                 <span class="sparkle">🎲</span> 开始匹配
@@ -548,7 +536,6 @@
             </button>
         </div>
 
-        <!-- 结果区域 -->
         <div class="result-section" id="resultSection">
             <div class="result-card" id="resultCard">
                 <div class="result-header">
@@ -572,12 +559,10 @@
     </div>
 </div>
 
-<!-- Toast -->
 <div class="toast" id="toast"></div>
 
 <script>
     (function() {
-        // DOM 元素
         const nameInput = document.getElementById('nameInput');
         const nameCountEl = document.getElementById('nameCount');
         const btnMatch = document.getElementById('btnMatch');
@@ -596,14 +581,8 @@
         let lastParsedNames = [];
         let toastTimer = null;
 
-        // ============ 工具函数 ============
-
-        /**
-         * 解析名字：支持换行、逗号(中英文)、顿号分隔
-         */
         function parseNames(text) {
             if (!text || !text.trim()) return [];
-            // 使用换行、逗号(中英文)、顿号作为分隔符
             const parts = text.split(/[\n\r,，、]+/);
             const names = parts
                 .map(s => s.trim())
@@ -611,9 +590,6 @@
             return names;
         }
 
-        /**
-         * Fisher-Yates 洗牌算法
-         */
         function shuffle(arr) {
             const a = [...arr];
             for (let i = a.length - 1; i > 0; i--) {
@@ -623,11 +599,6 @@
             return a;
         }
 
-        /**
-         * 格式化配对结果
-         * @param {string[]} names - 洗牌后的名字数组
-         * @returns {{ text: string, pairs: Array<[string, string]>, lone: string|null, totalGroups: number }}
-         */
         function formatPairs(names) {
             const pairs = [];
             let lone = null;
@@ -637,11 +608,10 @@
                 if (i + 1 < total) {
                     pairs.push([names[i], names[i + 1]]);
                 } else {
-                    lone = names[i]; // 奇数情况：最后一人轮空
+                    lone = names[i];
                 }
             }
 
-            // 构建格式化文本
             const lines = [];
             pairs.forEach((pair, idx) => {
                 lines.push(`${idx + 1}. ${pair[0]}&${pair[1]}`);
@@ -650,7 +620,8 @@
                 lines.push(`${pairs.length + 1}. ${lone}(轮空)`);
             }
 
-            const text = lines.join('; ');
+            // 修改为换行分隔，去掉分号
+            const text = lines.join('\n');
             return {
                 text,
                 pairs,
@@ -659,14 +630,10 @@
             };
         }
 
-        /**
-         * 显示 Toast
-         */
         function showToast(message, type = '') {
             if (toastTimer) clearTimeout(toastTimer);
             toast.textContent = message;
             toast.className = 'toast ' + type;
-            // 强制回流后添加show
             void toast.offsetWidth;
             toast.classList.add('show');
             toastTimer = setTimeout(() => {
@@ -675,15 +642,11 @@
             }, 2200);
         }
 
-        /**
-         * 更新名字计数显示
-         */
         function updateNameCount() {
             const names = parseNames(nameInput.value);
             lastParsedNames = names;
             const count = names.length;
             nameCountEl.textContent = `${count} 个名字`;
-            // 样式更新
             nameCountEl.classList.remove('has-names', 'warning', 'error-count');
             if (count >= 4) {
                 nameCountEl.classList.add('has-names');
@@ -692,7 +655,6 @@
             } else if (count === 1) {
                 nameCountEl.classList.add('error-count');
             }
-            // 更新预估组数提示
             if (count >= 2) {
                 const groups = Math.floor(count / 2);
                 const hasLone = count % 2 !== 0;
@@ -706,48 +668,31 @@
             }
         }
 
-        /**
-         * 执行匹配
-         */
         function doMatch(namesToUse) {
             const names = namesToUse || parseNames(nameInput.value);
             lastParsedNames = names;
 
             if (names.length < 2) {
-                // 错误提示
                 showToast('⚠️ 至少需要 2 个名字才能配对', 'warning-toast');
                 nameInput.classList.add('error-input');
                 setTimeout(() => nameInput.classList.remove('error-input'), 1500);
-                // 也显示结果区域但为空状态
                 showEmptyResult();
                 return;
             }
 
-            // 清除输入错误状态
             nameInput.classList.remove('error-input');
-
-            // 洗牌
             const shuffled = shuffle(names);
-
-            // 格式化
             const result = formatPairs(shuffled);
-
-            // 显示结果
             displayResult(result, names.length);
         }
 
-        /**
-         * 显示结果
-         */
         function displayResult(result, totalNames) {
-            // 显示结果区域
             resultSection.classList.add('visible');
             resultCard.classList.add('has-result');
             resultDot.style.display = 'inline-block';
             resultSummary.style.display = 'inline-block';
             resultActions.style.display = 'flex';
 
-            // 更新摘要
             const groups = result.pairs.length;
             let summaryText = `共 ${totalNames} 人，${groups} 组`;
             if (result.lone) {
@@ -755,7 +700,7 @@
             }
             resultSummary.textContent = summaryText;
 
-            // 构建带高亮的HTML结果
+            // 构建每行一个配对，用 <br> 分隔
             let htmlParts = [];
             result.pairs.forEach((pair, idx) => {
                 htmlParts.push(
@@ -772,30 +717,22 @@
                     `<span style="color:#d97706;">(轮空)</span>`
                 );
             }
-            const htmlContent = htmlParts.join('<span style="color:#94a3b8;">; </span>');
+            const htmlContent = htmlParts.join('<br>');
 
-            // 添加动画：先清空再填充
             resultContent.style.opacity = '0';
             resultContent.style.transform = 'translateY(4px)';
             resultContent.innerHTML = htmlContent;
-
-            // 存储纯文本用于复制
             resultContent.dataset.plainText = result.text;
 
-            // 动画显示
             requestAnimationFrame(() => {
                 resultContent.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
                 resultContent.style.opacity = '1';
                 resultContent.style.transform = 'translateY(0)';
             });
 
-            // 滚动到结果区域（移动端友好）
             resultCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
 
-        /**
-         * 显示空结果状态
-         */
         function showEmptyResult() {
             resultSection.classList.add('visible');
             resultCard.classList.remove('has-result');
@@ -808,25 +745,18 @@
             delete resultContent.dataset.plainText;
         }
 
-        /**
-         * HTML转义
-         */
         function escapeHTML(str) {
             const div = document.createElement('div');
             div.textContent = str;
             return div.innerHTML;
         }
 
-        /**
-         * 复制到剪贴板
-         */
         async function copyToClipboard(text) {
             try {
                 if (navigator.clipboard && navigator.clipboard.writeText) {
                     await navigator.clipboard.writeText(text);
                     return true;
                 }
-                // 降级方案
                 const textarea = document.createElement('textarea');
                 textarea.value = text;
                 textarea.style.position = 'fixed';
@@ -843,14 +773,10 @@
             }
         }
 
-        // ============ 事件监听 ============
-
-        // 实时更新名字计数
         nameInput.addEventListener('input', () => {
             updateNameCount();
         });
 
-        // 匹配按钮
         btnMatch.addEventListener('click', () => {
             const names = parseNames(nameInput.value);
             if (names.length < 2) {
@@ -861,12 +787,10 @@
                 return;
             }
             doMatch(names);
-            // 按钮微反馈
             btnMatch.style.transform = 'scale(0.94)';
             setTimeout(() => { btnMatch.style.transform = ''; }, 150);
         });
 
-        // Ctrl+Enter 快捷键
         nameInput.addEventListener('keydown', (e) => {
             if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
                 e.preventDefault();
@@ -874,7 +798,6 @@
             }
         });
 
-        // 示例按钮
         btnSample.addEventListener('click', () => {
             const sampleNames = [
                 '张三', '李四', '王五', '赵六', '陈七',
@@ -884,11 +807,9 @@
             nameInput.value = sampleNames.join('\n');
             updateNameCount();
             showToast('✅ 已填充 ' + sampleNames.length + ' 个示例名字', 'success');
-            // 自动匹配
             setTimeout(() => doMatch(sampleNames), 300);
         });
 
-        // 清空按钮
         btnClear.addEventListener('click', () => {
             nameInput.value = '';
             updateNameCount();
@@ -906,7 +827,6 @@
             showToast('🧹 已清空', '');
         });
 
-        // 复制结果按钮
         btnCopy.addEventListener('click', async () => {
             const plainText = resultContent.dataset.plainText;
             if (!plainText) {
@@ -916,7 +836,6 @@
             const success = await copyToClipboard(plainText);
             if (success) {
                 showToast('📋 已复制到剪贴板！', 'success');
-                // 按钮反馈
                 const origHTML = btnCopy.innerHTML;
                 btnCopy.innerHTML = '✅ 已复制';
                 btnCopy.style.background = '#ecfdf5';
@@ -933,14 +852,12 @@
             }
         });
 
-        // 重新匹配按钮
         btnReroll.addEventListener('click', () => {
             const names = parseNames(nameInput.value);
             if (names.length < 2) {
                 showToast('⚠️ 至少需要 2 个名字才能配对', 'warning-toast');
                 return;
             }
-            // 添加一个小延迟，让用户感知"重新随机"
             btnReroll.style.transform = 'rotate(180deg)';
             btnReroll.style.transition = 'transform 0.4s ease';
             setTimeout(() => {
@@ -954,20 +871,9 @@
             showToast('🔄 已重新匹配！', '');
         });
 
-        // 初始化计数
         updateNameCount();
 
-        // 页面加载时，如果输入框为空，光标自动聚焦
-        if (!nameInput.value.trim()) {
-            // 不自动聚焦，避免在移动端弹出键盘遮挡
-            // nameInput.focus();
-        }
-
-        console.log('🎲 随机两人配对器已就绪');
-        console.log('   - 支持换行、逗号(中英文)、顿号分隔名字');
-        console.log('   - Ctrl+Enter 快速匹配');
-        console.log('   - 奇数人数时最后一人轮空');
-        console.log('   - 点击"✨ 示例"快速体验');
+        console.log('🎲 随机两人配对器已就绪（分行输出版本）');
     })();
 </script>
 </body>
