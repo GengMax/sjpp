@@ -1,0 +1,974 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>随机两人配对 - Random Pair Generator</title>
+    <style>
+        :root {
+            --bg-start: #e8eef5;
+            --bg-end: #dce3ed;
+            --card-bg: #ffffff;
+            --primary: #6366f1;
+            --primary-hover: #4f46e5;
+            --primary-light: #eef2ff;
+            --accent: #f59e0b;
+            --accent-light: #fffbeb;
+            --text: #1e293b;
+            --text-secondary: #64748b;
+            --text-muted: #94a3b8;
+            --border: #e2e8f0;
+            --border-focus: #a5b4fc;
+            --result-bg: #f8fafc;
+            --result-border: #e2e8f0;
+            --danger: #ef4444;
+            --danger-light: #fef2f2;
+            --success: #10b981;
+            --success-light: #ecfdf5;
+            --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.05), 0 10px 15px rgba(0, 0, 0, 0.03);
+            --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.08), 0 20px 40px rgba(0, 0, 0, 0.04);
+            --shadow-xl: 0 20px 50px rgba(0, 0, 0, 0.12), 0 30px 60px rgba(0, 0, 0, 0.06);
+            --radius-sm: 8px;
+            --radius: 12px;
+            --radius-lg: 16px;
+            --radius-xl: 20px;
+            --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            --transition-slow: 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+            --font-mono: 'SF Mono', 'Fira Code', 'Fira Mono', 'Consolas', 'Monaco', 'Courier New', monospace;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Noto Sans SC', sans-serif;
+            background: linear-gradient(160deg, #f0f4f9 0%, #e4eaf3 25%, #eef1f7 50%, #e8ecf4 75%, #f2f5fa 100%);
+            background-attachment: fixed;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* 背景装饰 */
+        body::before {
+            content: '';
+            position: fixed;
+            top: -180px;
+            right: -120px;
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(99, 102, 241, 0.06) 0%, transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 0;
+        }
+        body::after {
+            content: '';
+            position: fixed;
+            bottom: -160px;
+            left: -100px;
+            width: 450px;
+            height: 450px;
+            background: radial-gradient(circle, rgba(245, 158, 11, 0.05) 0%, transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 640px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* 主卡片 */
+        .card {
+            background: var(--card-bg);
+            border-radius: var(--radius-xl);
+            padding: 36px 32px 32px;
+            box-shadow: var(--shadow-lg);
+            border: 1px solid var(--border);
+            transition: box-shadow var(--transition-slow);
+        }
+        .card:hover {
+            box-shadow: var(--shadow-xl);
+        }
+
+        /* 头部 */
+        .header {
+            text-align: center;
+            margin-bottom: 28px;
+        }
+        .header .icon-wrapper {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: var(--primary-light);
+            margin-bottom: 14px;
+            position: relative;
+        }
+        .header .icon-wrapper svg {
+            width: 28px;
+            height: 28px;
+            color: var(--primary);
+            transition: transform var(--transition-slow);
+        }
+        .header .icon-wrapper:hover svg {
+            transform: rotate(15deg) scale(1.1);
+        }
+        .header h1 {
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: var(--text);
+            letter-spacing: -0.02em;
+            margin: 0 0 4px;
+        }
+        .header .subtitle {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            font-weight: 400;
+        }
+
+        /* 输入区域 */
+        .input-section {
+            margin-bottom: 20px;
+        }
+        .input-label-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+        .input-label {
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: var(--text);
+            letter-spacing: -0.01em;
+        }
+        .name-count {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            background: #f8fafc;
+            padding: 4px 10px;
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            transition: all var(--transition);
+            white-space: nowrap;
+        }
+        .name-count.has-names {
+            color: var(--primary);
+            background: var(--primary-light);
+            border-color: #c7d2fe;
+            font-weight: 600;
+        }
+        .name-count.warning {
+            color: #d97706;
+            background: #fffbeb;
+            border-color: #fde68a;
+        }
+        .name-count.error-count {
+            color: var(--danger);
+            background: var(--danger-light);
+            border-color: #fecaca;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 160px;
+            max-height: 400px;
+            padding: 14px 16px;
+            border: 2px solid var(--border);
+            border-radius: var(--radius);
+            font-size: 0.95rem;
+            font-family: inherit;
+            color: var(--text);
+            background: #fafbfc;
+            resize: vertical;
+            transition: all var(--transition);
+            line-height: 1.7;
+            letter-spacing: 0.01em;
+        }
+        textarea::placeholder {
+            color: #b0b8c4;
+            font-size: 0.9rem;
+        }
+        textarea:focus {
+            outline: none;
+            border-color: var(--border-focus);
+            background: #fff;
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.08), 0 2px 8px rgba(0, 0, 0, 0.04);
+        }
+        textarea.error-input {
+            border-color: #fca5a5;
+            background: #fff;
+            box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.06);
+        }
+
+        /* 按钮行 */
+        .button-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 6px;
+        }
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 7px;
+            padding: 11px 20px;
+            border-radius: 25px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            transition: all var(--transition);
+            letter-spacing: 0.01em;
+            white-space: nowrap;
+            font-family: inherit;
+            position: relative;
+            overflow: hidden;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .btn:active {
+            transform: scale(0.96);
+            transition: transform 0.1s;
+        }
+        .btn:focus-visible {
+            outline: 3px solid rgba(99, 102, 241, 0.4);
+            outline-offset: 2px;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: #fff;
+            box-shadow: 0 4px 14px rgba(99, 102, 241, 0.3);
+            flex: 1;
+            min-width: 140px;
+        }
+        .btn-primary:hover {
+            background: var(--primary-hover);
+            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+            transform: translateY(-1px);
+        }
+        .btn-primary:active {
+            transform: scale(0.96) translateY(0);
+            box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+        }
+        .btn-primary .sparkle {
+            display: inline-block;
+            transition: transform var(--transition);
+        }
+        .btn-primary:hover .sparkle {
+            transform: rotate(20deg) scale(1.2);
+        }
+
+        .btn-outline {
+            background: #fff;
+            color: var(--text);
+            border: 2px solid var(--border);
+        }
+        .btn-outline:hover {
+            background: #f8fafc;
+            border-color: #cbd5e1;
+            transform: translateY(-1px);
+        }
+        .btn-outline:active {
+            background: #f1f5f9;
+            transform: scale(0.96) translateY(0);
+        }
+
+        .btn-ghost {
+            background: transparent;
+            color: var(--text-secondary);
+            border: 2px solid transparent;
+            padding: 9px 16px;
+            font-weight: 500;
+        }
+        .btn-ghost:hover {
+            background: #f8fafc;
+            color: var(--text);
+            border-color: var(--border);
+        }
+
+        .btn-sm {
+            padding: 7px 14px;
+            font-size: 0.8rem;
+            border-radius: 20px;
+            gap: 4px;
+        }
+
+        /* 结果区域 */
+        .result-section {
+            margin-top: 8px;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: opacity var(--transition-slow), transform var(--transition-slow);
+            pointer-events: none;
+        }
+        .result-section.visible {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: auto;
+        }
+        .result-card {
+            background: var(--result-bg);
+            border: 2px solid var(--result-border);
+            border-radius: var(--radius);
+            padding: 20px 22px;
+            position: relative;
+            transition: all var(--transition);
+        }
+        .result-card.has-result {
+            background: #fdfdff;
+            border-color: #d1d5db;
+            box-shadow: var(--shadow-sm);
+        }
+        .result-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 14px;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .result-title {
+            font-weight: 700;
+            font-size: 0.9rem;
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .result-title .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--success);
+            display: inline-block;
+            animation: pulse-dot 2s infinite;
+        }
+        @keyframes pulse-dot {
+            0%,
+            100% {
+                box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4);
+            }
+            50% {
+                box-shadow: 0 0 0 10px rgba(16, 185, 129, 0);
+            }
+        }
+        .result-summary {
+            font-size: 0.78rem;
+            color: var(--text-secondary);
+            background: #f1f5f9;
+            padding: 4px 10px;
+            border-radius: 15px;
+            font-weight: 500;
+        }
+        .result-content {
+            font-family: var(--font-mono);
+            font-size: 0.95rem;
+            color: var(--text);
+            background: #fff;
+            border: 1px solid #e8ecf1;
+            border-radius: var(--radius-sm);
+            padding: 16px 18px;
+            line-height: 1.9;
+            word-break: break-all;
+            letter-spacing: 0.02em;
+            white-space: pre-wrap;
+            min-height: 48px;
+            transition: all var(--transition);
+            position: relative;
+        }
+        .result-content:empty::after {
+            content: '点击上方「🎲 开始匹配」按钮查看结果';
+            color: #c0c7d0;
+            font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            font-size: 0.85rem;
+            letter-spacing: 0;
+        }
+        .result-content .pair-highlight {
+            color: var(--primary);
+            font-weight: 700;
+        }
+        .result-content .lone-person {
+            color: #d97706;
+            font-weight: 600;
+        }
+        .result-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+            flex-wrap: wrap;
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            top: 24px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-120px);
+            background: #1e293b;
+            color: #fff;
+            padding: 12px 24px;
+            border-radius: 30px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            z-index: 1000;
+            pointer-events: none;
+            transition: transform 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            letter-spacing: 0.01em;
+        }
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+        }
+        .toast.success {
+            background: #059669;
+        }
+        .toast.warning-toast {
+            background: #d97706;
+        }
+        .toast.error-toast {
+            background: #dc2626;
+        }
+
+        /* 响应式 */
+        @media (max-width: 600px) {
+            .card {
+                padding: 24px 16px 20px;
+                border-radius: var(--radius-lg);
+            }
+            .header h1 {
+                font-size: 1.35rem;
+            }
+            .header .icon-wrapper {
+                width: 44px;
+                height: 44px;
+            }
+            .header .icon-wrapper svg {
+                width: 22px;
+                height: 22px;
+            }
+            textarea {
+                min-height: 130px;
+                font-size: 0.9rem;
+                padding: 12px 14px;
+            }
+            .btn {
+                padding: 10px 16px;
+                font-size: 0.85rem;
+                border-radius: 22px;
+            }
+            .button-row {
+                gap: 8px;
+            }
+            .result-content {
+                font-size: 0.85rem;
+                padding: 12px 14px;
+            }
+            .result-card {
+                padding: 14px 16px;
+            }
+        }
+        @media (max-width: 380px) {
+            .btn-primary {
+                min-width: 100%;
+                flex: none;
+            }
+            .button-row .btn-outline {
+                flex: 1;
+                min-width: 0;
+            }
+            .btn-sm {
+                font-size: 0.75rem;
+                padding: 6px 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="card">
+            <!-- 头部 -->
+            <div class="header">
+                <div class="icon-wrapper">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="8" cy="8" r="2.5"/><circle cx="16" cy="6" r="2.5"/>
+                        <circle cx="10" cy="16" r="2.5"/><circle cx="18" cy="14" r="2.5"/>
+                        <line x1="10" y1="9.5" x2="14" y2="7.5"/>
+                        <line x1="11.5" y1="14.5" x2="16" y2="13"/>
+                        <line x1="9" y1="10" x2="9.5" y2="13.5"/>
+                    </svg>
+                </div>
+                <h1>掼蛋博士-随机匹配队友工具</h1>
+                <p class="subtitle">输入名字，完全随机匹配，两人一组</p>
+            </div>
+
+            <!-- 输入区域 -->
+            <div class="input-section">
+                <div class="input-label-row">
+                    <span class="input-label">📋 名字列表</span>
+                    <span class="name-count" id="nameCount">0 个名字</span>
+                </div>
+                <textarea
+                id="nameInput"
+                placeholder="请输入名字，每行一个，或用逗号分隔&#10;例如：&#10;张三&#10;李四&#10;王五&#10;赵六&#10;陈七&#10;&#10;或者：张三,李四,王五,赵六,陈七"
+            ></textarea>
+        </div>
+
+        <!-- 按钮行 -->
+        <div class="button-row">
+            <button class="btn btn-primary" id="btnMatch" title="开始随机匹配（Ctrl+Enter）">
+                <span class="sparkle">🎲</span> 开始匹配
+            </button>
+            <button class="btn btn-outline btn-sm" id="btnSample" title="填充示例名字">
+                ✨ 示例
+            </button>
+            <button class="btn btn-ghost btn-sm" id="btnClear" title="清空输入和结果">
+                🗑️ 清空
+            </button>
+        </div>
+
+        <!-- 结果区域 -->
+        <div class="result-section" id="resultSection">
+            <div class="result-card" id="resultCard">
+                <div class="result-header">
+                    <span class="result-title">
+                        <span class="dot" style="display:none;" id="resultDot"></span>
+                        📄 匹配结果
+                    </span>
+                    <span class="result-summary" id="resultSummary" style="display:none;"></span>
+                </div>
+                <div class="result-content" id="resultContent"></div>
+                <div class="result-actions" id="resultActions" style="display:none;">
+                    <button class="btn btn-outline btn-sm" id="btnCopy" title="复制结果到剪贴板">
+                        📋 复制结果
+                    </button>
+                    <button class="btn btn-outline btn-sm" id="btnReroll" title="重新随机匹配">
+                        🔄 重新匹配
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+    (function() {
+        // DOM 元素
+        const nameInput = document.getElementById('nameInput');
+        const nameCountEl = document.getElementById('nameCount');
+        const btnMatch = document.getElementById('btnMatch');
+        const btnSample = document.getElementById('btnSample');
+        const btnClear = document.getElementById('btnClear');
+        const resultSection = document.getElementById('resultSection');
+        const resultCard = document.getElementById('resultCard');
+        const resultDot = document.getElementById('resultDot');
+        const resultSummary = document.getElementById('resultSummary');
+        const resultContent = document.getElementById('resultContent');
+        const resultActions = document.getElementById('resultActions');
+        const btnCopy = document.getElementById('btnCopy');
+        const btnReroll = document.getElementById('btnReroll');
+        const toast = document.getElementById('toast');
+
+        let lastParsedNames = [];
+        let toastTimer = null;
+
+        // ============ 工具函数 ============
+
+        /**
+         * 解析名字：支持换行、逗号(中英文)、顿号分隔
+         */
+        function parseNames(text) {
+            if (!text || !text.trim()) return [];
+            // 使用换行、逗号(中英文)、顿号作为分隔符
+            const parts = text.split(/[\n\r,，、]+/);
+            const names = parts
+                .map(s => s.trim())
+                .filter(s => s.length > 0);
+            return names;
+        }
+
+        /**
+         * Fisher-Yates 洗牌算法
+         */
+        function shuffle(arr) {
+            const a = [...arr];
+            for (let i = a.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [a[i], a[j]] = [a[j], a[i]];
+            }
+            return a;
+        }
+
+        /**
+         * 格式化配对结果
+         * @param {string[]} names - 洗牌后的名字数组
+         * @returns {{ text: string, pairs: Array<[string, string]>, lone: string|null, totalGroups: number }}
+         */
+        function formatPairs(names) {
+            const pairs = [];
+            let lone = null;
+            const total = names.length;
+
+            for (let i = 0; i < total; i += 2) {
+                if (i + 1 < total) {
+                    pairs.push([names[i], names[i + 1]]);
+                } else {
+                    lone = names[i]; // 奇数情况：最后一人轮空
+                }
+            }
+
+            // 构建格式化文本
+            const lines = [];
+            pairs.forEach((pair, idx) => {
+                lines.push(`${idx + 1}. ${pair[0]}&${pair[1]}`);
+            });
+            if (lone) {
+                lines.push(`${pairs.length + 1}. ${lone}(轮空)`);
+            }
+
+            const text = lines.join('; ');
+            return {
+                text,
+                pairs,
+                lone,
+                totalGroups: lines.length,
+            };
+        }
+
+        /**
+         * 显示 Toast
+         */
+        function showToast(message, type = '') {
+            if (toastTimer) clearTimeout(toastTimer);
+            toast.textContent = message;
+            toast.className = 'toast ' + type;
+            // 强制回流后添加show
+            void toast.offsetWidth;
+            toast.classList.add('show');
+            toastTimer = setTimeout(() => {
+                toast.classList.remove('show');
+                toastTimer = null;
+            }, 2200);
+        }
+
+        /**
+         * 更新名字计数显示
+         */
+        function updateNameCount() {
+            const names = parseNames(nameInput.value);
+            lastParsedNames = names;
+            const count = names.length;
+            nameCountEl.textContent = `${count} 个名字`;
+            // 样式更新
+            nameCountEl.classList.remove('has-names', 'warning', 'error-count');
+            if (count >= 4) {
+                nameCountEl.classList.add('has-names');
+            } else if (count >= 2) {
+                nameCountEl.classList.add('warning');
+            } else if (count === 1) {
+                nameCountEl.classList.add('error-count');
+            }
+            // 更新预估组数提示
+            if (count >= 2) {
+                const groups = Math.floor(count / 2);
+                const hasLone = count % 2 !== 0;
+                let hint = `${count} 个名字，预计 ${groups} 组`;
+                if (hasLone) hint += '，1 人轮空';
+                nameCountEl.title = hint;
+            } else if (count === 1) {
+                nameCountEl.title = '至少需要 2 个名字才能配对';
+            } else {
+                nameCountEl.title = '请输入名字';
+            }
+        }
+
+        /**
+         * 执行匹配
+         */
+        function doMatch(namesToUse) {
+            const names = namesToUse || parseNames(nameInput.value);
+            lastParsedNames = names;
+
+            if (names.length < 2) {
+                // 错误提示
+                showToast('⚠️ 至少需要 2 个名字才能配对', 'warning-toast');
+                nameInput.classList.add('error-input');
+                setTimeout(() => nameInput.classList.remove('error-input'), 1500);
+                // 也显示结果区域但为空状态
+                showEmptyResult();
+                return;
+            }
+
+            // 清除输入错误状态
+            nameInput.classList.remove('error-input');
+
+            // 洗牌
+            const shuffled = shuffle(names);
+
+            // 格式化
+            const result = formatPairs(shuffled);
+
+            // 显示结果
+            displayResult(result, names.length);
+        }
+
+        /**
+         * 显示结果
+         */
+        function displayResult(result, totalNames) {
+            // 显示结果区域
+            resultSection.classList.add('visible');
+            resultCard.classList.add('has-result');
+            resultDot.style.display = 'inline-block';
+            resultSummary.style.display = 'inline-block';
+            resultActions.style.display = 'flex';
+
+            // 更新摘要
+            const groups = result.pairs.length;
+            let summaryText = `共 ${totalNames} 人，${groups} 组`;
+            if (result.lone) {
+                summaryText += '，1 人轮空';
+            }
+            resultSummary.textContent = summaryText;
+
+            // 构建带高亮的HTML结果
+            let htmlParts = [];
+            result.pairs.forEach((pair, idx) => {
+                htmlParts.push(
+                    `<span style="color:#475569;">${idx + 1}.</span> ` +
+                    `<span style="color:#1e293b;font-weight:600;">${escapeHTML(pair[0])}</span>` +
+                    `<span style="color:#6366f1;font-weight:700;">&</span>` +
+                    `<span style="color:#1e293b;font-weight:600;">${escapeHTML(pair[1])}</span>`
+                );
+            });
+            if (result.lone) {
+                htmlParts.push(
+                    `<span style="color:#475569;">${result.pairs.length + 1}.</span> ` +
+                    `<span style="color:#d97706;font-weight:600;">${escapeHTML(result.lone)}</span>` +
+                    `<span style="color:#d97706;">(轮空)</span>`
+                );
+            }
+            const htmlContent = htmlParts.join('<span style="color:#94a3b8;">; </span>');
+
+            // 添加动画：先清空再填充
+            resultContent.style.opacity = '0';
+            resultContent.style.transform = 'translateY(4px)';
+            resultContent.innerHTML = htmlContent;
+
+            // 存储纯文本用于复制
+            resultContent.dataset.plainText = result.text;
+
+            // 动画显示
+            requestAnimationFrame(() => {
+                resultContent.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+                resultContent.style.opacity = '1';
+                resultContent.style.transform = 'translateY(0)';
+            });
+
+            // 滚动到结果区域（移动端友好）
+            resultCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        /**
+         * 显示空结果状态
+         */
+        function showEmptyResult() {
+            resultSection.classList.add('visible');
+            resultCard.classList.remove('has-result');
+            resultDot.style.display = 'none';
+            resultSummary.style.display = 'none';
+            resultActions.style.display = 'none';
+            resultContent.innerHTML = '';
+            resultContent.style.opacity = '1';
+            resultContent.style.transform = 'translateY(0)';
+            delete resultContent.dataset.plainText;
+        }
+
+        /**
+         * HTML转义
+         */
+        function escapeHTML(str) {
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
+        /**
+         * 复制到剪贴板
+         */
+        async function copyToClipboard(text) {
+            try {
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    await navigator.clipboard.writeText(text);
+                    return true;
+                }
+                // 降级方案
+                const textarea = document.createElement('textarea');
+                textarea.value = text;
+                textarea.style.position = 'fixed';
+                textarea.style.left = '-9999px';
+                textarea.style.top = '-9999px';
+                document.body.appendChild(textarea);
+                textarea.focus();
+                textarea.select();
+                const success = document.execCommand('copy');
+                document.body.removeChild(textarea);
+                return success;
+            } catch (err) {
+                return false;
+            }
+        }
+
+        // ============ 事件监听 ============
+
+        // 实时更新名字计数
+        nameInput.addEventListener('input', () => {
+            updateNameCount();
+        });
+
+        // 匹配按钮
+        btnMatch.addEventListener('click', () => {
+            const names = parseNames(nameInput.value);
+            if (names.length < 2) {
+                showToast('⚠️ 至少需要 2 个名字才能配对', 'warning-toast');
+                nameInput.classList.add('error-input');
+                setTimeout(() => nameInput.classList.remove('error-input'), 1500);
+                showEmptyResult();
+                return;
+            }
+            doMatch(names);
+            // 按钮微反馈
+            btnMatch.style.transform = 'scale(0.94)';
+            setTimeout(() => { btnMatch.style.transform = ''; }, 150);
+        });
+
+        // Ctrl+Enter 快捷键
+        nameInput.addEventListener('keydown', (e) => {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                e.preventDefault();
+                btnMatch.click();
+            }
+        });
+
+        // 示例按钮
+        btnSample.addEventListener('click', () => {
+            const sampleNames = [
+                '张三', '李四', '王五', '赵六', '陈七',
+                '周八', '吴九', '郑十', '钱十一', '孙十二',
+                '刘小雨', '黄大明', '林小芳', '何志远', '郭美琳',
+            ];
+            nameInput.value = sampleNames.join('\n');
+            updateNameCount();
+            showToast('✅ 已填充 ' + sampleNames.length + ' 个示例名字', 'success');
+            // 自动匹配
+            setTimeout(() => doMatch(sampleNames), 300);
+        });
+
+        // 清空按钮
+        btnClear.addEventListener('click', () => {
+            nameInput.value = '';
+            updateNameCount();
+            resultSection.classList.remove('visible');
+            resultCard.classList.remove('has-result');
+            resultDot.style.display = 'none';
+            resultSummary.style.display = 'none';
+            resultActions.style.display = 'none';
+            resultContent.innerHTML = '';
+            resultContent.style.opacity = '1';
+            resultContent.style.transform = 'translateY(0)';
+            delete resultContent.dataset.plainText;
+            nameInput.classList.remove('error-input');
+            nameInput.focus();
+            showToast('🧹 已清空', '');
+        });
+
+        // 复制结果按钮
+        btnCopy.addEventListener('click', async () => {
+            const plainText = resultContent.dataset.plainText;
+            if (!plainText) {
+                showToast('⚠️ 暂无结果可复制', 'warning-toast');
+                return;
+            }
+            const success = await copyToClipboard(plainText);
+            if (success) {
+                showToast('📋 已复制到剪贴板！', 'success');
+                // 按钮反馈
+                const origHTML = btnCopy.innerHTML;
+                btnCopy.innerHTML = '✅ 已复制';
+                btnCopy.style.background = '#ecfdf5';
+                btnCopy.style.borderColor = '#6ee7b7';
+                btnCopy.style.color = '#059669';
+                setTimeout(() => {
+                    btnCopy.innerHTML = origHTML;
+                    btnCopy.style.background = '';
+                    btnCopy.style.borderColor = '';
+                    btnCopy.style.color = '';
+                }, 1800);
+            } else {
+                showToast('❌ 复制失败，请手动选择复制', 'error-toast');
+            }
+        });
+
+        // 重新匹配按钮
+        btnReroll.addEventListener('click', () => {
+            const names = parseNames(nameInput.value);
+            if (names.length < 2) {
+                showToast('⚠️ 至少需要 2 个名字才能配对', 'warning-toast');
+                return;
+            }
+            // 添加一个小延迟，让用户感知"重新随机"
+            btnReroll.style.transform = 'rotate(180deg)';
+            btnReroll.style.transition = 'transform 0.4s ease';
+            setTimeout(() => {
+                btnReroll.style.transform = 'rotate(360deg)';
+            }, 50);
+            setTimeout(() => {
+                btnReroll.style.transform = '';
+                btnReroll.style.transition = '';
+            }, 450);
+            doMatch(names);
+            showToast('🔄 已重新匹配！', '');
+        });
+
+        // 初始化计数
+        updateNameCount();
+
+        // 页面加载时，如果输入框为空，光标自动聚焦
+        if (!nameInput.value.trim()) {
+            // 不自动聚焦，避免在移动端弹出键盘遮挡
+            // nameInput.focus();
+        }
+
+        console.log('🎲 随机两人配对器已就绪');
+        console.log('   - 支持换行、逗号(中英文)、顿号分隔名字');
+        console.log('   - Ctrl+Enter 快速匹配');
+        console.log('   - 奇数人数时最后一人轮空');
+        console.log('   - 点击"✨ 示例"快速体验');
+    })();
+</script>
+</body>
+</html>
